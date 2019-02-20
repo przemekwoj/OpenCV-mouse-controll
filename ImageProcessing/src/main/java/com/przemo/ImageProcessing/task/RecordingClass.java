@@ -1,5 +1,7 @@
 package com.przemo.ImageProcessing.task;
 
+import java.awt.AWTException;
+import java.awt.Robot;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
@@ -11,9 +13,11 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 import org.opencv.videoio.VideoCapture;
 
 import javafx.concurrent.Task;
@@ -45,6 +49,10 @@ public class RecordingClass extends Task<Void>
     private List<MatOfPoint2f> approxCurves;
     
     private Mat hierarchy;
+    
+    private Robot mouse;
+    
+    public int x,y;
     
     public RecordingClass() {}
     
@@ -102,6 +110,10 @@ public class RecordingClass extends Task<Void>
     		detectingCircle();
     		//drawContorus
     		Imgproc.drawContours(matrix, contours, -1, new Scalar(255), -1);
+    		//draw center of contours
+    		drawCenterOfContorus();
+    		//mouse tracking()
+    		mousetracking();
         	// Creating BuffredImage from the matrix
     		createBufferImage(matrix);
             // Creating the Writable Image
@@ -111,6 +123,25 @@ public class RecordingClass extends Task<Void>
     	}
 	}
 	
+	public void mousetracking() throws AWTException 
+	{
+		mouse = new Robot();
+		mouse.mouseMove(x, y);
+	}
+
+
+	public void drawCenterOfContorus()
+	{
+		List<Moments> mu = new ArrayList<Moments>(contours.size());
+	    for (int i = 0; i < contours.size(); i++) {
+	        mu.add(i, Imgproc.moments(contours.get(i), false));
+	        Moments p = mu.get(i);
+	         x = (int) (p.get_m10() / p.get_m00());
+	         y = (int) (p.get_m01() / p.get_m00());
+	        Imgproc.circle(matrix, new Point(x,y), 10, new Scalar(255));
+	    }
+	}
+
 	int i = 0;
 	public void detectingCircle()
 	{
